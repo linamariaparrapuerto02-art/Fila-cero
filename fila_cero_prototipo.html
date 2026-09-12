@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fila Cero | Prototipo de turnos</title>
+<style>
+  :root{
+    --cream:#fffaf2; --dark:#252525; --muted:#6f6a63; --accent:#c94f35;
+    --accent2:#e9b44c; --card:#ffffff; --line:#eadfd2; --green:#4e8b62;
+    --shadow:0 12px 35px rgba(50,35,20,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--cream);color:var(--dark)}
+  header{background:var(--dark);color:#fff;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;gap:20px;position:sticky;top:0;z-index:5}
+  .brand{font-size:24px;font-weight:800;letter-spacing:.3px}
+  .brand span{color:var(--accent2)}
+  nav button{border:1px solid #777;background:transparent;color:#fff;padding:10px 15px;border-radius:999px;cursor:pointer}
+  nav button.active{background:#fff;color:var(--dark)}
+  main{max-width:1150px;margin:auto;padding:35px 20px 60px}
+  .hero{display:grid;grid-template-columns:1.3fr .7fr;gap:25px;align-items:stretch}
+  .hero-card,.card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+  .hero-card{padding:38px}
+  h1{font-size:clamp(32px,5vw,56px);line-height:1.02;margin:0 0 15px}
+  h2{margin-top:0}
+  p{color:var(--muted);line-height:1.55}
+  .tag{display:inline-block;background:#fff0d2;color:#805719;padding:7px 11px;border-radius:999px;font-weight:700;font-size:13px;margin-bottom:14px}
+  .btn{border:0;border-radius:13px;padding:13px 18px;font-weight:800;cursor:pointer;font-size:15px}
+  .primary{background:var(--accent);color:#fff}
+  .secondary{background:#f2ebe2;color:var(--dark)}
+  .qr-box{padding:25px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .qr-box img{width:210px;height:210px;image-rendering:auto;border-radius:10px}
+  .panel{margin-top:25px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  .card{padding:25px}
+  label{display:block;font-weight:700;margin:15px 0 7px}
+  input,select{width:100%;padding:13px;border:1px solid #d9cdbf;border-radius:12px;background:#fff;font-size:15px}
+  .big-number{font-size:62px;font-weight:900;color:var(--accent);margin:10px 0}
+  .status{padding:12px;border-radius:12px;background:#f7f2eb;margin:12px 0}
+  .hidden{display:none}
+  .notice{padding:15px;border-radius:14px;background:#edf6ef;border:1px solid #cde2d2;margin-top:15px}
+  .queue-list{display:grid;gap:10px;margin-top:15px}
+  .queue-item{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .queue-item small{color:var(--muted)}
+  .pill{padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;background:#fff0d2}
+  .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .table{padding:17px 8px;text-align:center;border-radius:14px;border:1px solid #c9dfce;background:#eef7f0}
+  .table.occupied{background:#fbeceb;border-color:#efc5bf}
+  .table.reserved{background:#fff4d9;border-color:#ead28d}
+  .table strong{display:block}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  .stat{padding:18px;border-radius:18px;background:#f7f1e9;border:1px solid var(--line)}
+  .stat b{font-size:28px;display:block;margin-top:5px}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:25px}
+  @media(max-width:800px){
+    .hero,.grid{grid-template-columns:1fr}
+    .tables{grid-template-columns:repeat(2,1fr)}
+    header{position:static;flex-direction:column;align-items:flex-start}
+    .stats{grid-template-columns:1fr}
+  }
+
+  .table{cursor:pointer;min-height:100px;transition:transform .15s,box-shadow .15s}
+  .table:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(50,35,20,.10)}
+  .table .capacity{font-size:12px;color:var(--muted);margin-top:5px}
+  .stat span{font-size:13px;font-weight:700;color:var(--muted)}
+  .stat small{color:var(--muted)}
+  .queue-item.called{border-color:#cde2d2;background:#f7fcf8}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Fila <span>Cero</span></div>
+  <nav>
+    <button id="clientTab" class="active" onclick="showView('client')">🍽️ Cliente</button>
+    <button id="staffTab" onclick="showView('staff')">👩‍💼 Personal</button>
+  </nav>
+</header>
+
+<main>
+  <section id="clientView">
+    <div class="hero">
+      <div class="hero-card">
+        <span class="tag">PROTOTIPO · SOLUCIÓN ÁGIL</span>
+        <h1>Disfruta tu comida,<br>no la fila.</h1>
+        <p>Registra tu turno desde el celular, continúa con tu día y recibe una alerta cuando tu mesa esté lista.</p>
+        <button class="btn primary" onclick="document.getElementById('reservation').scrollIntoView({behavior:'smooth'})">Tomar un turno</button>
+      </div>
+      <div class="card qr-box">
+        <h2>Escanea y evita la fila</h2>
+        <img id="qrImage" alt="Código QR del prototipo">
+        <p>Este QR apunta a la dirección de esta página cuando esté publicada.</p>
+      </div>
+    </div>
+
+    <div id="reservation" class="panel grid">
+      <div class="card">
+        <h2>🎟️ Solicitar turno</h2>
+        <label for="name">Nombre</label>
+        <input id="name" placeholder="Ej. Laura">
+        <label for="people">Número de personas</label>
+        <select id="people">
+          <option value="1">1 persona</option><option value="2">2 personas</option>
+          <option value="3">3 personas</option><option value="4">4 personas</option>
+          <option value="5">5 personas</option><option value="6">6 personas</option>
+        </select>
+        <label for="time">Preferencia de llegada</label>
+        <select id="time">
+          <option>Lo antes posible</option><option>12:00 - 12:30</option>
+          <option>12:30 - 13:00</option><option>13:00 - 13:30</option>
+          <option>13:30 - 14:00</option>
+        </select>
+        <button class="btn primary" style="margin-top:18px;width:100%" onclick="takeTurn()">Confirmar turno</button>
+        <div id="confirmation"></div>
+      </div>
+
+      <div class="card">
+        <h2>📍 Mi turno</h2>
+        <div id="myTurn">
+          <p>Aún no tienes un turno activo.</p>
+          <div class="status">Cuando registres un turno, aquí podrás ver su estado.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="staffView" class="hidden">
+    <div class="hero-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
+        <div>
+          <span class="tag">PANEL DEL PERSONAL</span>
+          <h1 style="font-size:42px;margin-bottom:8px">Centro de operaciones</h1>
+          <p style="margin-bottom:0">Control de mesas, turnos y atención en tiempo real.</p>
+        </div>
+        <div class="status" style="margin:0;background:#edf6ef;border-color:#cde2d2">
+          🟢 Sistema activo<br><small id="clock">--:--:--</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel stats">
+      <div class="stat">
+        <span>🟢 Mesas disponibles</span>
+        <b id="availableStat">0</b>
+        <small>Listas para recibir clientes</small>
+      </div>
+      <div class="stat">
+        <span>🟡 Mesas reservadas</span>
+        <b id="reservedStat">0</b>
+        <small>Asignadas a próximos turnos</small>
+      </div>
+      <div class="stat">
+        <span>🔴 Mesas ocupadas</span>
+        <b id="occupiedStat">0</b>
+        <small>Clientes actualmente atendidos</small>
+      </div>
+    </div>
+
+    <div class="card panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin-bottom:5px">🪑 Mapa de mesas</h2>
+          <p style="margin-top:0">Selecciona una mesa para actualizar su estado.</p>
+        </div>
+        <div class="actions">
+          <span class="pill" style="background:#edf6ef">🟢 Disponible</span>
+          <span class="pill" style="background:#fff4d9">🟡 Reservada</span>
+          <span class="pill" style="background:#fbeceb">🔴 Ocupada</span>
+        </div>
+      </div>
+      <div id="tables" class="tables"></div>
+    </div>
+
+    <div class="grid panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h2>🎟️ Cola de turnos</h2>
+            <p>Clientes registrados desde el QR.</p>
+          </div>
+          <div class="big-number" style="font-size:38px;margin:0" id="waitingStat">0</div>
+        </div>
+        <div id="queue" class="queue-list"></div>
+        <div class="actions" style="margin-top:18px">
+          <button class="btn primary" onclick="callNext()">📣 Llamar siguiente</button>
+          <button class="btn secondary" onclick="clearAll()">↻ Reiniciar demo</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📋 Turno en atención</h2>
+        <div id="currentTurnCard" class="status">
+          <strong id="currentTurnTitle">No hay un turno llamado</strong>
+          <p id="currentTurnInfo" style="margin-bottom:0">Cuando llames a un cliente, aquí aparecerá la información de su turno y mesa.</p>
+        </div>
+        <button class="btn secondary" onclick="finishCurrentTurn()" style="width:100%">✅ Finalizar atención</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>Prototipo académico · Fila Cero · Gestión ágil de turnos para restaurantes</footer>
+
+<script>
+let queue = JSON.parse(localStorage.getItem('filaCeroQueue') || '[]');
+let tables = JSON.parse(localStorage.getItem('filaCeroTables') || 'null') ||
+  Array.from({length:12}, (_,i)=>({id:i+1,status:'available',people:0}));
+tables = tables.map(t=>({...t, people:t.people||0}));
+let lastNumber = Number(localStorage.getItem('filaCeroLast') || '23');
+let current = localStorage.getItem('filaCeroCurrent') || '—';
+let myTurnId = localStorage.getItem('filaCeroMyTurn') || '';
+
+function save(){
+  localStorage.setItem('filaCeroQueue', JSON.stringify(queue));
+  localStorage.setItem('filaCeroTables', JSON.stringify(tables));
+  localStorage.setItem('filaCeroLast', lastNumber);
+  localStorage.setItem('filaCeroCurrent', current);
+  render();
+}
+
+function showView(view){
+  const client=view==='client';
+  document.getElementById('clientView').classList.toggle('hidden',!client);
+  document.getElementById('staffView').classList.toggle('hidden',client);
+  document.getElementById('clientTab').classList.toggle('active',client);
+  document.getElementById('staffTab').classList.toggle('active',!client);
+  render();
+}
+
+function takeTurn(){
+  const name=(document.getElementById('name').value.trim() || 'Cliente');
+  const people=document.getElementById('people').value;
+  const time=document.getElementById('time').value;
+  lastNumber++;
+  const turn={id:lastNumber,name,people:Number(people),time,status:'waiting'};
+  queue.push(turn);
+  myTurnId=String(turn.id);
+  localStorage.setItem('filaCeroMyTurn',myTurnId);
+  document.getElementById('confirmation').innerHTML=
+    `<div class="notice"><strong>¡Turno confirmado!</strong><br>Tu número es <strong>#${turn.id}</strong>.<br>Personas: ${people}.<br>Preferencia: ${time}.</div>`;
+  save();
+}
+
+function callNext(){
+  const next=queue.find(x=>x.status==='waiting');
+  if(!next){alert('No hay personas esperando.');return;}
+  const free=tables.find(t=>t.status==='available');
+  if(!free){
+    alert('No hay mesas disponibles. Libera una mesa antes de llamar al siguiente turno.');
+    return;
+  }
+  next.status='called';
+  current='#'+next.id;
+  free.status='occupied';
+  free.people=next.people;
+  next.table=free.id;
+  save();
+}
+
+function finishCurrentTurn(){
+  const active=queue.find(x=>String(x.id).replace('#','')===String(current).replace('#','') && x.status==='called');
+  if(!active){alert('No hay un turno en atención.');return;}
+  active.status='finished';
+  if(active.table){
+    const t=tables.find(x=>x.id===active.table);
+    if(t){t.status='available';t.people=0;}
+  }
+  current='—';
+  save();
+}
+
+function cycleTable(id){
+  const t=tables.find(x=>x.id===id);
+  if(!t)return;
+  if(t.status==='available'){t.status='reserved';t.people=0;}
+  else if(t.status==='reserved'){t.status='occupied';t.people=t.people||2;}
+  else {t.status='available';t.people=0;}
+  save();
+}
+
+function clearAll(){
+  if(!confirm('¿Reiniciar los datos de la demostración?'))return;
+  queue=[]; tables=Array.from({length:12}, (_,i)=>({id:i+1,status:'available',people:0}));
+  current='—'; myTurnId=''; lastNumber=23;
+  localStorage.removeItem('filaCeroMyTurn');
+  save();
+  document.getElementById('confirmation').innerHTML='';
+}
+
+function render(){
+  const q=document.getElementById('queue');
+  if(q){
+    const active=queue.filter(x=>x.status!=='finished');
+    q.innerHTML=active.length ? active.map(x=>`
+      <div class="queue-item ${x.status==='called'?'called':''}">
+        <div>
+          <strong>#${x.id} · ${escapeHtml(x.name)}</strong><br>
+          <small>${x.people} persona(s) · ${escapeHtml(x.time)}${x.table?' · Mesa '+x.table:''}</small>
+        </div>
+        <span class="pill">${x.status==='waiting'?'ESPERANDO':'EN ATENCIÓN'}</span>
+      </div>`).join('') : '<p>No hay turnos activos.</p>';
+  }
+
+  const tb=document.getElementById('tables');
+  if(tb){
+    tb.innerHTML=tables.map(t=>`
+      <button class="table ${t.status}" onclick="cycleTable(${t.id})">
+        <strong>Mesa ${t.id}</strong>
+        <div>${t.status==='available'?'🟢 Disponible':t.status==='reserved'?'🟡 Reservada':'🔴 Ocupada'}</div>
+        <div class="capacity">${t.status==='occupied' ? (t.people||0)+' persona(s)' : 'Haz clic para cambiar'}</div>
+      </button>`).join('');
+  }
+
+  const waiting=queue.filter(x=>x.status==='waiting').length;
+  const available=tables.filter(x=>x.status==='available').length;
+  const reserved=tables.filter(x=>x.status==='reserved').length;
+  const occupied=tables.filter(x=>x.status==='occupied').length;
+
+  const waitingEl=document.getElementById('waitingStat');
+  if(waitingEl) waitingEl.textContent=waiting;
+  const availableEl=document.getElementById('availableStat');
+  if(availableEl) availableEl.textContent=available;
+  const reservedEl=document.getElementById('reservedStat');
+  if(reservedEl) reservedEl.textContent=reserved;
+  const occupiedEl=document.getElementById('occupiedStat');
+  if(occupiedEl) occupiedEl.textContent=occupied;
+
+  const currentTitle=document.getElementById('currentTurnTitle');
+  const currentInfo=document.getElementById('currentTurnInfo');
+  const currentObj=queue.find(x=>String(x.id)===String(current).replace('#','') && x.status==='called');
+  if(currentTitle && currentInfo){
+    if(currentObj){
+      currentTitle.textContent='🎟️ Turno #'+currentObj.id+' · '+currentObj.name;
+      currentInfo.textContent=currentObj.people+' persona(s) · Mesa '+(currentObj.table||'pendiente')+' · '+currentObj.time;
+    }else{
+      currentTitle.textContent='No hay un turno llamado';
+      currentInfo.textContent='Cuando llames a un cliente, aquí aparecerá la información de su turno y mesa.';
+    }
+  }
+
+  const mine=queue.find(x=>String(x.id)===myTurnId && x.status!=='finished');
+  const mt=document.getElementById('myTurn');
+  if(mt){
+    if(mine){
+      const ahead=queue.filter(x=>x.status==='waiting' && x.id<mine.id).length;
+      mt.innerHTML=`<div class="big-number">#${mine.id}</div>
+        <div class="status"><strong>${mine.status==='waiting'?'🟡 En espera':'🟢 ¡Tu turno fue llamado!'}</strong><br>
+        ${mine.status==='waiting'?'Hay aproximadamente '+ahead+' grupo(s) antes que tú.':'Dirígete al personal para conocer tu mesa.'}</div>
+        ${mine.table?'<p><strong>Mesa asignada: '+mine.table+'</strong></p>':''}`;
+    }else{
+      mt.innerHTML='<p>Aún no tienes un turno activo.</p><div class="status">Cuando registres un turno, aquí podrás ver su estado.</div>';
+    }
+  }
+
+  const clock=document.getElementById('clock');
+  if(clock) clock.textContent=new Date().toLocaleTimeString('es-CO');
+}
+
+function escapeHtml(text){
+  return text.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function updateQR(){
+  const url=window.location.href;
+  document.getElementById('qrImage').src=
+    'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(url);
+}
+
+render();
+updateQR();
+setInterval(render,2000);
+</script>
+</body>
+</html>
