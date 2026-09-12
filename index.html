@@ -258,14 +258,16 @@ function callNext(){
 }
 
 function finishCurrentTurn(){
-  const active=queue.find(x=>String(x.id).replace('#','')===String(current).replace('#','') && x.status==='called');
-  if(!active){alert('No hay un turno en atención.');return;}
+  const active=queue.find(x=>x.status==='called');
+  if(!active){alert('No hay ningún turno en atención actualmente.');return;}
   active.status='finished';
   if(active.table){
     const t=tables.find(x=>x.id===active.table);
     if(t){t.status='available';t.people=0;}
   }
-  current='—';
+  if(String(current).replace('#','')===String(active.id)){
+    current='—';
+  }
   save();
 }
 
@@ -372,3 +374,9 @@ setInterval(render,2000);
 </script>
 </body>
 </html>
+ 
+
+
+
+ 
+  
