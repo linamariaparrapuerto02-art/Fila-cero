@@ -65,7 +65,7 @@
   .table .capacity{font-size:12px;color:var(--muted);margin-top:5px}
   .stat span{font-size:13px;font-weight:700;color:var(--muted)}
   .stat small{color:var(--muted)}
-  .queue-item.called{border-color:#cde2d2;background:#f7fcf8}
+  .queue-item.called{border-color:#4e8b62;background:#f7fcf8}
 </style>
 </head>
 <body>
@@ -193,7 +193,7 @@
           <strong id="currentTurnTitle">No hay un turno llamado</strong>
           <p id="currentTurnInfo" style="margin-bottom:0">Cuando llames a un cliente, aquí aparecerá la información de su turno y mesa.</p>
         </div>
-        <button class="btn secondary" onclick="finishCurrentTurn()" style="width:100%">✅ Finalizar atención</button>
+        <button class="btn primary" onclick="finishCurrentTurn()" style="width:100%;background:#4e8b62">✅ Finalizar turno actual</button>
       </div>
     </div>
   </section>
@@ -207,14 +207,12 @@ let tables = JSON.parse(localStorage.getItem('filaCeroTables') || 'null') ||
   Array.from({length:12}, (_,i)=>({id:i+1,status:'available',people:0}));
 tables = tables.map(t=>({...t, people:t.people||0}));
 let lastNumber = Number(localStorage.getItem('filaCeroLast') || '23');
-let current = localStorage.getItem('filaCeroCurrent') || '—';
 let myTurnId = localStorage.getItem('filaCeroMyTurn') || '';
 
 function save(){
   localStorage.setItem('filaCeroQueue', JSON.stringify(queue));
   localStorage.setItem('filaCeroTables', JSON.stringify(tables));
   localStorage.setItem('filaCeroLast', lastNumber);
-  localStorage.setItem('filaCeroCurrent', current);
   render();
 }
 
@@ -250,25 +248,27 @@ function callNext(){
     return;
   }
   next.status='called';
-  current='#'+next.id;
   free.status='occupied';
   free.people=next.people;
   next.table=free.id;
   save();
 }
 
-function finishCurrentTurn(){
-  const active=queue.find(x=>x.status==='called');
-  if(!active){alert('No hay ningún turno en atención actualmente.');return;}
+function finishTurnById(id){
+  const active=queue.find(x=>x.id===id && x.status==='called');
+  if(!active) return;
   active.status='finished';
   if(active.table){
     const t=tables.find(x=>x.id===active.table);
     if(t){t.status='available';t.people=0;}
   }
-  if(String(current).replace('#','')===String(active.id)){
-    current='—';
-  }
   save();
+}
+
+function finishCurrentTurn(){
+  const active=queue.find(x=>x.status==='called');
+  if(!active){alert('No hay ningún turno en atención actualmente.');return;}
+  finishTurnById(active.id);
 }
 
 function cycleTable(id){
@@ -283,7 +283,7 @@ function cycleTable(id){
 function clearAll(){
   if(!confirm('¿Reiniciar los datos de la demostración?'))return;
   queue=[]; tables=Array.from({length:12}, (_,i)=>({id:i+1,status:'available',people:0}));
-  current='—'; myTurnId=''; lastNumber=23;
+  myTurnId=''; lastNumber=23;
   localStorage.removeItem('filaCeroMyTurn');
   save();
   document.getElementById('confirmation').innerHTML='';
@@ -299,7 +299,10 @@ function render(){
           <strong>#${x.id} · ${escapeHtml(x.name)}</strong><br>
           <small>${x.people} persona(s) · ${escapeHtml(x.time)}${x.table?' · Mesa '+x.table:''}</small>
         </div>
-        <span class="pill">${x.status==='waiting'?'ESPERANDO':'EN ATENCIÓN'}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="pill">${x.status==='waiting'?'ESPERANDO':'EN ATENCIÓN'}</span>
+          ${x.status==='called'?`<button class="btn primary" style="padding:6px 12px;font-size:12px;" onclick="finishTurnById(${x.id})">Finalizar</button>`:''}
+        </div>
       </div>`).join('') : '<p>No hay turnos activos.</p>';
   }
 
@@ -329,7 +332,7 @@ function render(){
 
   const currentTitle=document.getElementById('currentTurnTitle');
   const currentInfo=document.getElementById('currentTurnInfo');
-  const currentObj=queue.find(x=>String(x.id)===String(current).replace('#','') && x.status==='called');
+  const currentObj=queue.find(x=>x.status==='called');
   if(currentTitle && currentInfo){
     if(currentObj){
       currentTitle.textContent='🎟️ Turno #'+currentObj.id+' · '+currentObj.name;
@@ -374,9 +377,3 @@ setInterval(render,2000);
 </script>
 </body>
 </html>
- 
-
-
-
- 
-  
